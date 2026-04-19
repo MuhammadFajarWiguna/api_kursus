@@ -4,6 +4,7 @@ const {
   tampilKursus,
   ubahKursus,
   hapusKursus,
+  cariKursusByMentor,
 } = require("./service.js");
 
 const fs = require("fs");
@@ -13,8 +14,7 @@ const createKursus = async (req, res) => {
   let thumbnail = null;
   try {
     const {
-      nama_kursus,
-      mentor_id,
+      nama_kursus, 
       judul,
       deskripsi,
       harga,
@@ -35,7 +35,7 @@ const createKursus = async (req, res) => {
 
     const data = await buatKursus({
       nama_kursus,
-      mentor_id,
+      mentor_id:req.user.id,
       judul,
       deskripsi,
       harga,
@@ -56,12 +56,33 @@ const createKursus = async (req, res) => {
   }
 };
 
-const getAll = async (req, res) => {
+const getKursus = async (req, res) => {
   try {
-    const data = await tampilKursus();
-    return res.status(200).json({ message: "Date user", data });
+    const role = req.user.role;
+    const userId = req.user.id;
+
+    let data;
+
+    if (role === "admin") {
+      data = await tampilKursus(); 
+
+    } else if (role === "mentor")  { 
+      data = await cariKursusByMentor(userId); 
+
+    } else if(role === "siswa"){
+      data = await tampilKursus()
+    } else {
+      return res.status(403).json({
+        message: "Role tidak valid"
+      })
+    }
+
+    return res.json({
+      message: "Data kursus",
+      data,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+   return res.status(500).json({ message: error.message });
   }
 };
 
@@ -80,7 +101,6 @@ const updateKursus = async (req, res) => {
     const id = req.params.id;
     const {
       nama_kursus,
-      mentor_id,
       judul,
       deskripsi,
       harga,
@@ -114,7 +134,7 @@ const updateKursus = async (req, res) => {
 
     const body = {
       nama_kursus,
-      mentor_id,
+      mentor_id: req.user.id,
       judul,
       deskripsi,
       harga,
@@ -153,7 +173,7 @@ const deleteKursus = async (req, res) => {
 
     await hapusKursus(id);
 
-    res.status(201).json({ message: "Kursus berhasil dihapus" });
+    res.status(200).json({ message: "Kursus berhasil dihapus" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -161,7 +181,7 @@ const deleteKursus = async (req, res) => {
 
 module.exports = {
   createKursus,
-  getAll,
+  getKursus,
   getById,
   updateKursus,
   deleteKursus,

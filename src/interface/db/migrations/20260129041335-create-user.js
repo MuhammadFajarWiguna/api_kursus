@@ -10,17 +10,18 @@ module.exports = {
         type: Sequelize.INTEGER,
       },
       nama_user: {
-        type: Sequelize.STRING(50),
+        type: Sequelize.STRING(100),
         allowNull: false,
       },
 
       password: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(255),
         allowNull: false,
       },
 
       email: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(100),
+        allowNull: false,
         unique: true,
       },
 
@@ -31,15 +32,18 @@ module.exports = {
       no_hp: {
         type: Sequelize.STRING(15),
         allowNull: false,
+        unique: true,
       },
 
       profile: {
         type: Sequelize.STRING,
+        defaultValue: "default.png"
       },
 
       role: {
-        type: Sequelize.ENUM("siswa", "mentor"),
+        type: Sequelize.ENUM("siswa", "mentor","admin"),
         allowNull: false,
+        defaultValue:"siswa",
       },
 
       createdAt: {

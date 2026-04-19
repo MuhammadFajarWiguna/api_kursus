@@ -3,7 +3,7 @@ const router = express.Router();
 
 const {
   createPendaftaran,
-  getPendafataran,
+  getAllPendaftaran,
   deletePendaftaran,
   updatePendaftaran,
   getAllById,
@@ -13,10 +13,10 @@ const { cekPendaftaran,cekId } = require("./validate.js");
 const { authMiddleware } = require("../middlewares/authMiddleware.js");
 const { roleMiddleware } = require("../middlewares/role.js");
 
-router.post("/tambah", cekPendaftaran, createPendaftaran);
-router.get("/", authMiddleware, roleMiddleware(["mentor"]), getPendafataran);
-router.get("/data/:id", getAllById);
-router.patch("/update/:id",cekId, cekPendaftaran, updatePendaftaran);
-router.delete("/hapus/:id",cekId, deletePendaftaran);
+router.post("/tambah",authMiddleware,roleMiddleware(["siswa","admin"]), cekPendaftaran, createPendaftaran);
+router.get("/data-pendaftar", authMiddleware, roleMiddleware(["admin"]), getAllPendaftaran);
+router.get("/data/:id",authMiddleware,roleMiddleware(["admin"]), getAllById);
+router.patch("/update/:id",authMiddleware,roleMiddleware(["siswa", "admin"]),cekId, cekPendaftaran, updatePendaftaran);
+router.delete("/hapus/:id",authMiddleware,roleMiddleware(["admin", "siswa"]),cekId, deletePendaftaran);
 
 module.exports = router;

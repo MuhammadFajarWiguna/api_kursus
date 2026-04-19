@@ -1,49 +1,57 @@
-const {
-  buatUser,
-  cariUser,
-  cariIdUser,
-  tampilUser,
-  ubahUser,
-  hapusUser,
-  cariByRole,
-} = require("./service.js");
+const { buatUser, cariUser, cariIdUser, tampilUser, ubahUser, hapusUser, cariByRole } = require("./service.js");
 
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const path = require("path");
 
+
+
 const registerUser = async (req, res) => {
   try {
-    const { nama_user, password, email, alamat, no_hp, role } = req.body;
+    const { nama_user, email, password, alamat, no_hp} = req.body;
+
+    const cek = await cariUser(email);
+    if (cek) {
+      return res.status(400).json({message: "Email sudah digunakan"})
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    
     const user = await buatUser({
       nama_user,
+      email: email.toLowerCase().trim(),
       password: hashedPassword,
-      email,
       alamat,
       no_hp,
-      role,
+      role: "siswa",
+      profile: "default.png",
     });
 
-    res.status(201).json({
-      message: "User created",
+   return res.status(201).json({
+      message: "Register berhasil",
       user: {
         id: user.id,
         nama_user: user.nama_user,
         email: user.email,
-        role: user.role,
+        role: user.role
       },
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+   return res.status(500).json({ message: error.message });
   }
 };
 
 const loginUser = async (req, res) => {
   try {
-    const user = req.user;
+    const { email, password } = req.body;
+
+    const user = await cariUser(email);
+
+    if (!user) return res.status(404).json({ message: "User tidak ditemukan" });
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) return res.status(401).json({ message: "password salah" });
 
     const token = jwt.sign(
       {
@@ -57,7 +65,9 @@ const loginUser = async (req, res) => {
 
     return res.status(200).json({
       message: "Login sukses",
-      token,
+      data:{
+        token,
+      }
     });
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -66,14 +76,22 @@ const loginUser = async (req, res) => {
 
 const createUser = async (req, res) => {
   try {
-    const { nama_user, password, email, alamat, no_hp, role } = req.body;
+    const { nama_user,email, password,  alamat, no_hp, role } = req.body;
+   
+    const cek = await cariUser(email);
 
-    const profile = req.file ? req.file.filename : null;
+    if (cek) {
+      return res.status(400).json({message: "Email sudah digunakan"})
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+
+    const profile = req.file ? req.file.filename : "default.png";
 
     const user = await buatUser({
       nama_user,
-      password,
-      email,
+      email: email.toLowerCase().trim(),
+      password: hashed,
       alamat,
       no_hp,
       role,
@@ -81,7 +99,7 @@ const createUser = async (req, res) => {
     });
 
     return res.status(201).json({
-      message: "User berhasil dibuat",
+      message: "User berhasil didaftar",
       data: user,
     });
   } catch (error) {
@@ -89,9 +107,33 @@ const createUser = async (req, res) => {
   }
 };
 
+const getMe = async(req, res) => {
+  try {
+    const user = await cariIdUser(req.user.id);
+    return res.status(200).json({
+    message: "Profil saya",
+    data: user
+  })
+  } catch (error) {
+    return res.status(500).json({message: error.message})
+  }
+}
+
 const getByRole = async (req, res) => {
   try {
-    const role = req.user.role;
+    const role = req.params.role;
+    
+    const allowedRole = [
+      "admin",
+      "mentor",
+      "siswa",
+    ]
+
+if (!allowedRole.includes(role)) {
+  return res.status(400).json({
+    message: "Role tidak valid",
+  });
+}
     const data = await cariByRole(role);
 
     return res.status(200).json({ message: "Data berdasarkan role", data });
@@ -100,20 +142,128 @@ const getByRole = async (req, res) => {
   }
 };
 
-const getAll = async (req, res) => {
+const createAdmin = async (req, res) => {
   try {
-    const data = await tampilUser();
-    return res.status(200).json({ message: "Date user", data });
+    const { nama_user, email, password } = req.body;
+
+    const cek = await cariUser(email);
+    if (cek) {
+      return res.status(400).json({ message: "Email sudah digunakan" });
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+
+    const user = await buatUser({
+      nama_user,
+      email: email.toLowerCase().trim(),
+      password: hashed,
+      role: "admin",
+      profile: "default.png",
+    });
+
+    return res.status(201).json({
+      message: "Admin berhasil dibuat",
+      data: user,
+    });
+
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message });
   }
 };
 
+
+const getUsers = async (req, res) => {
+  try {
+    let data;
+   
+    if (req.user.role === "admin") {
+      data = await tampilUser();
+    } else if (req.user.role === "mentor") {
+      data = await cariByRole("siswa");
+    } else if (req.user.role === "siswa") {
+      data = await cariByRole("mentor");
+    }
+    if (!data) {
+  return res.status(403).json({ message: "Role tidak valid" });
+    }
+
+   return res.status(200).json({
+      message: "Data user",
+      data
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message
+    });
+  }
+};
+
+// const getUsers = async (req, res) => {
+//   try {
+//     const data = await tampilUser();
+
+//     return res.status(200).json({
+//       message: "Data User",
+//       data,
+//     })
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+// const getSiswa = async (req, res) => {
+//   try {
+//     const data = await cariByRole("siswa")
+//     return res.status(201).json({
+//       message: "Data Siswa",
+//       data
+//     })
+//   } catch (error) {
+//     return res.status(500).json({message: error.message})
+//   }
+// }
+
+// const getMentor = async (req, res) => {
+//   try {
+//     const data = await cariByRole("mentor")
+//     return res.status(201).json({
+//       message: "Data Mentor",
+//       data,
+//     })
+//   } catch (error) {
+//     return res.status(500).json({message: error.message})
+//   }
+// }
+
+// const getAdmin = async (req, res) => {
+//   try {
+//     const data = await cariByRole("admin")
+//     return res.status(201).json({
+//       message: "Data Admin",
+//       data,
+//     })
+//   } catch (error) {
+//     return res.status(500).json({message: error.message})
+//   }
+// }
+// const getAll = async (req, res) => {
+//   try {
+//     const data = await tampilUser();
+//     return res.status(200).json({ message: "Data user", data });
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
 const getById = async (req, res) => {
   try {
-    const id = req.params.id;
-    const data = await cariIdUser(id);
-    return res.status(200).json({ message: "Data user berdasar id", data });
+    const data = await cariIdUser(req.params.id);
+    if (!data) {
+    return res.status(404).json({
+        message: "User tidak ditemukan"
+      })
+    }
+    return res.status(200).json({ message: "Detail user", data });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
@@ -122,17 +272,25 @@ const getById = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     const id = req.params.id;
-    const { nama_user, email, alamat, no_hp } = req.body;
+
+    if (
+      req.user.role !== "admin" &&
+      req.user.id != id
+    ) {
+      return res.status(403).json({
+        message: "Maaf, Anda tidak punya akses",
+      });
+    }
 
     const userLama = await cariIdUser(id);
     if (!userLama) {
-      return res.status(404).json({ message: "User tidak ditemukan" });
+          return res.status(404).json({ message: "User tidak ditemukan" });
     }
-
+    
     let profile = userLama.profile;
 
     if (req.file) {
-      if (profile) {
+      if (profile && profile !== "default.png") {
         const oldPath = path.join(__dirname, "../uploads", profile);
         if (fs.existsSync(oldPath)) {
           fs.unlinkSync(oldPath);
@@ -141,10 +299,12 @@ const updateUser = async (req, res) => {
 
       profile = req.file.filename;
     }
+    
+    const { nama_user, email, alamat, no_hp } = req.body;
 
     await ubahUser(id, { nama_user, email, alamat, no_hp, profile });
 
-    return res.json({ message: "User berhasil diupdate" });
+    return res.json({ message: "User berhasil diubah" });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
@@ -155,11 +315,12 @@ const deleteUser = async (req, res) => {
     const id = req.params.id;
 
     const user = await cariIdUser(id);
+
     if (!user) {
       return res.status(404).json({ message: "User tidak ditemukan" });
     }
 
-    if (user.profile) {
+    if (user.profile && user.profile !== "default.png") {
       const filePath = path.join(__dirname, "../uploads", user.profile);
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
@@ -174,26 +335,49 @@ const deleteUser = async (req, res) => {
   }
 };
 
-const mentorDashboard = (req, res) => {
-  res.json({
-    message: "Welcome Mentor!",
-    user: req.user,
-  });
-};
+// const mentorDashboard = (req, res) => {
+//   const { id, nama_user, role } = req.user;
+//   res.json({
+//     message: "Welcome Mentor!",
+//     user: {
+//       id,
+//       nama_user,
+//       role,
+//     },
+//   });
+// };
 
-const siswaDashboard = (req, res) => {
-  res.json({
-    message: "Welcome Siswa!",
-    user: req.user,
-  });
-};
+// const siswaDashboard = (req, res) => {
+//   const { id, nama_user, role } = req.user;
+//   res.json({
+//     message: "Welcome Siswa!",
+//     user: {
+//       id,
+//       nama_user,
+//       role,
+//     },
+//   });
+// };
+
+// const adminDashboard = (req, res) => {
+//   const { id, nama_user, role } = req.user;
+
+//   res.json({
+//     message: "Welcome Admin!",
+//     user: {
+//       id,
+//       nama_user,
+//       role,
+//     },
+//   });
+// };
 
 module.exports = {
   registerUser,
   loginUser,
-  getAll,
-  mentorDashboard,
-  siswaDashboard,
+  createAdmin,
+  getUsers,
+  getMe,
   getById,
   updateUser,
   deleteUser,

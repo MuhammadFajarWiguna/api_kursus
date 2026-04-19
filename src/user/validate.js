@@ -6,13 +6,14 @@ const cekId = async (req, res, next) => {
     const id = req.params.id;
     const data = await cariIdUser(id);
     if (!data) {
-      return res.status(404).json({ message: "Data tidak ditemukan" }, null);
+      return res.status(404).json({ message: "Data tidak ditemukan" });
     }
+    next();
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-  next();
 };
+
 
 const cekTambahUser = async (req, res, next) => {
   const { nama_user, password, email, alamat, no_hp, role } = req.body;
@@ -25,9 +26,7 @@ const cekTambahUser = async (req, res, next) => {
   const maxVarchar = 15;
 
   if (no_hp.length > maxVarchar) {
-    return res
-      .status(400)
-      .json({ message: `No hp tidak boleh lebih dari ${maxVarchar} karakter` });
+    return res.status(400).json({ message: `No hp tidak boleh lebih dari ${maxVarchar} karakter` });
   }
   next();
 };

@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
         as: "user",
       });
       Pendaftaran.belongsTo(models.Kursus, {
-        foreignKey: "kursusId",
+        foreignKey: "kursus_id",
         as: "kursus",
       });
     }
@@ -28,18 +28,21 @@ module.exports = (sequelize, DataTypes) => {
       },
       tanggal_daftar: {
         type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW
       },
 
       siswa_id: {
         type: DataTypes.INTEGER,
+        allowNull: false,
         references: {
           model: "user",
           key: "id",
         },
       },
 
-      kursusId: {
+      kursus_id: {
         type: DataTypes.INTEGER,
+        allowNull: false,
         references: {
           model: "kursus",
           key: "id",
@@ -48,6 +51,8 @@ module.exports = (sequelize, DataTypes) => {
 
       status_pembayaran: {
         type: DataTypes.ENUM("pending", "lunas", "cicil"),
+        allowNull: false,
+        defaultValue:"pending"
       },
     },
     {

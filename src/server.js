@@ -10,7 +10,7 @@ const app = express();
 const PORT = process.env.APP_PORT || 3000;
 const HOST = process.env.APP_HOST || "127.0.0.1";
 
-app.use(express.json());
+app.use(express.json());  
 app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
 app.use(express.urlencoded({ extended: true }));
 

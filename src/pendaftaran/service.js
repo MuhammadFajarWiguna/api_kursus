@@ -15,7 +15,7 @@ const lihatPendaftaran = async () => {
 };
 
 const ubahPendaftaran = async (id, body) => {
-  const data = await User.findByPk(id);
+  const data = await Pendaftaran.findByPk(id);
   if (!data) return null;
 
   await data.update(body);
@@ -27,7 +27,12 @@ const hapusPendaftaran = async (id) => {
 };
 
 const cariIdPendaftaran = async (id) => {
-  return await Pendaftaran.findByPk(id);
+  return await Pendaftaran.findByPk(id,{
+    include: [
+      {model: User, as:"user", attributes:["nama_user", "email"]},
+      {model: Kursus, as:"kursus", attributes:["nama_kursus", "harga"]}
+    ]
+  });
 };
 module.exports = {
   tambahPendaftaran,

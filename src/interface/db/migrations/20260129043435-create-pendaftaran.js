@@ -11,26 +11,35 @@ module.exports = {
       },
       tanggal_daftar: {
         type: Sequelize.DATE,
+        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP")
       },
 
       siswa_id: {
         type: Sequelize.INTEGER,
+        allowNull: false,
         references: {
           model: "user",
           key: "id",
         },
+        onUpdate: "CASCADE",
+        onDelete: "RESTRICT"
       },
 
-      kursusId: {
+      kursus_id: {
         type: Sequelize.INTEGER,
+        allowNull: false,
         references: {
           model: "kursus",
           key: "id",
         },
+        onUpdate: "CASCADE",
+        onDelete: "RESTRICT"
       },
 
       status_pembayaran: {
         type: Sequelize.ENUM("pending", "lunas", "cicil"),
+        allowNull: false,
+        defaultValue: "pending"
       },
 
       createdAt: {
@@ -44,6 +53,11 @@ module.exports = {
         defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
       },
     });
+    await queryInterface.addConstraint("pendaftaran",{
+      fields:["siswa_id", "kursusId"],
+      type:"unique",
+      name:"unique_siswa_kursus"
+    })
   },
   async down(queryInterface, Sequelize) {
     await queryInterface.dropTable("pendaftaran");

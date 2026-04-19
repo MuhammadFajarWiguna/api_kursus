@@ -1,3 +1,4 @@
+const { where } = require("sequelize");
 const db = require("../interface/db/models/index.js");
 const { User } = db;
 
@@ -10,12 +11,19 @@ const cariUser = async (email) => {
 };
 
 const cariIdUser = async (id) => {
-  return await User.findByPk(id);
+  return await User.findByPk(id,{
+    attributes: { exclude: ["password"] },
+  });
+
 };
 
-const tampilUser = async () => {
-  return await User.findAll();
-};
+const tampilUser = async (role) => {
+  const query = role ? {where: {role}} : {};
+  return await User.findAll({
+    ...query, 
+    attributes: {exclude: ["password"]},
+  });
+}
 
 const ubahUser = async (id, body) => {
   const data = await User.findByPk(id);

@@ -10,28 +10,32 @@ module.exports = {
         type: Sequelize.INTEGER,
       },
       nama_kursus: {
-        type: Sequelize.STRING(50),
+        type: Sequelize.STRING(100),
         allowNull: false,
       },
 
       mentor_id: {
         type: Sequelize.INTEGER,
+        allowNull: false,
         references: {
           model: "user",
           key: "id",
         },
+        onUpdate: "CASCADE",
+        onDelete: "RESTRICT",
       },
 
       judul: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(100),
       },
 
       deskripsi: {
-        type: Sequelize.STRING,
+        type: Sequelize.TEXT,
       },
 
       harga: {
         type: Sequelize.INTEGER,
+        defaultValue: 0,
       },
 
       status: {

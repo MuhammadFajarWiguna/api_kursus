@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       });
 
       Kursus.hasMany(models.Pendaftaran, {
-        foreignKey: "kursusId",
+        foreignKey: "kursus_id",
         as: "pendaftaran",
       });
     }
@@ -28,12 +28,13 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
       },
       nama_kursus: {
-        type: DataTypes.STRING(50),
+        type: DataTypes.STRING(100),
         allowNull: false,
       },
 
       mentor_id: {
         type: DataTypes.INTEGER,
+        allowNull: false,
         references: {
           model: "user",
           key: "id",
@@ -45,11 +46,12 @@ module.exports = (sequelize, DataTypes) => {
       },
 
       deskripsi: {
-        type: DataTypes.STRING,
+        type: DataTypes.TEXT,
       },
 
       harga: {
         type: DataTypes.INTEGER,
+        defaultValue: 0
       },
 
       status: {

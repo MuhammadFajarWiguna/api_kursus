@@ -2,15 +2,17 @@ const express = require("express");
 const {
   registerUser,
   loginUser,
-  mentorDashboard,
-  siswaDashboard,
+  getUsers,
+  getMe,
+  getById,
   updateUser,
   deleteUser,
   getByRole,
   createUser,
+  createAdmin,
 } = require("./controller.js");
 
-const { cekId, cekTambahUser, cekLogin } = require("./validate.js");
+const { cekId, cekTambahUser, } = require("./validate.js");
 
 const { authMiddleware } = require("../middlewares/authMiddleware.js");
 const { roleMiddleware } = require("../middlewares/role.js");
@@ -18,31 +20,71 @@ const uploadUser = require("../multer/uploadUser.js");
 
 const router = express.Router();
 
+
 router.post("/register", registerUser);
-router.post("/login", cekLogin, loginUser);
-router.post("/tambah", uploadUser.single("profile"), cekTambahUser, createUser);
+router.post("/login", loginUser);
 
 router.get(
-  "/mentor",
+  "/me",
   authMiddleware,
-  roleMiddleware(["mentor"]),
-  mentorDashboard,
-);
-router.get(
-  "/data_mentor",
+  getMe)
+
+router.post(
+  "/create-admin",
   authMiddleware,
-  roleMiddleware(["mentor"]),
-  getByRole,
+  roleMiddleware(["admin"]),
+  createAdmin
 );
 
-router.get("/data_siswa", authMiddleware, roleMiddleware(["siswa"]), getByRole);
-router.get("/siswa", authMiddleware, roleMiddleware(["siswa"]), siswaDashboard);
+router.post(
+  "/tambah", 
+  authMiddleware,
+  roleMiddleware(["admin"]), 
+  uploadUser.single("profile"),
+  cekTambahUser, 
+  createUser);
+
+router.get(
+  "/",
+  authMiddleware,
+  roleMiddleware(["mentor","admin","siswa"]),
+  getUsers,
+);
+router.get(
+  "/role/:role",
+  authMiddleware,
+  roleMiddleware(["mentor", "admin"]),
+  getByRole
+);
+
+// router.get(
+//   "/admin",
+//   authMiddleware,
+//   roleMiddleware(["admin"]),
+//   getUsers,
+// );
+
+// router.get(
+//   "/data-admin",
+//   authMiddleware,
+//   roleMiddleware(["admin"]),
+//   getByRole,
+// );
+
+router.get("/:id",
+  authMiddleware,
+  cekId,
+  getById,
+)
+
+// router.get("/data-siswa", authMiddleware, roleMiddleware(["siswa", "admin", "mentor"]));
+// router.get("/siswa", authMiddleware, roleMiddleware(["siswa", "admin", "mentor"]),getUsers);
 
 router.patch(
   "/update/:id",
-  cekId,
   authMiddleware,
-  roleMiddleware(["mentor", "siswa"]),
+  cekId,
+  roleMiddleware(["admin", "siswa"]),
   uploadUser.single("profile"),
   updateUser,
 );
@@ -51,7 +93,7 @@ router.delete(
   "/delete/:id",
   cekId,
   authMiddleware,
-  roleMiddleware(["mentor"]),
+  roleMiddleware(["admin"]),
   deleteUser,
 );
 

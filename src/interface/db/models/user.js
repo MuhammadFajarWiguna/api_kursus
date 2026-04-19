@@ -27,18 +27,22 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
       },
       nama_user: {
-        type: DataTypes.STRING(50),
+        type: DataTypes.STRING(100),
         allowNull: false,
       },
 
       password: {
-        type: DataTypes.STRING,
+        type: DataTypes.STRING(255),
         allowNull: false,
       },
 
       email: {
-        type: DataTypes.STRING,
+        type: DataTypes.STRING(100),
+        allowNull:false,
         unique: true,
+        validate: {
+          isEmail: true, 
+        }
       },
 
       alamat: {
@@ -48,15 +52,18 @@ module.exports = (sequelize, DataTypes) => {
       no_hp: {
         type: DataTypes.STRING(15),
         allowNull: false,
+        unique: true
       },
 
       profile: {
         type: DataTypes.STRING,
+        defaultValue: "default.png"
       },
 
       role: {
-        type: DataTypes.ENUM("siswa", "mentor"),
+        type: DataTypes.ENUM("siswa", "mentor", "admin"),
         allowNull: false,
+        defaultValue:"siswa",
       },
     },
     {

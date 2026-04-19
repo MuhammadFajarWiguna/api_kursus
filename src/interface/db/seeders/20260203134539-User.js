@@ -1,23 +1,29 @@
 "use strict";
 
-/** @type {import('sequelize-cli').Migration} */
+const bcrypt = require("bcryptjs");
+
 module.exports = {
-  up: (queryInterface, Sequelize) => {
+  async up(queryInterface, Sequelize) {
+    const hashedPassword = await bcrypt.hash("admin123", 10);
+
     return queryInterface.bulkInsert("user", [
       {
-        nama_user: "Asep",
-        password: "12345",
-        email: "asep@gmail.com",
-        no_hp: "08562937251",
+        nama_user: "admin12",
+        email: "admin@gmail.com",
+        password: hashedPassword,
+        role: "admin",
         alamat: "Bandung",
-        profile: "",
-        role: "siswa",
+        no_hp: "08123456789",
+        profile: "default.png",
         createdAt: new Date(),
         updatedAt: new Date(),
       },
     ]);
   },
-  down: (queryInterface, Sequelize) => {
-    return queryInterface.bulkDelete("user", null, {});
+
+  async down(queryInterface, Sequelize) {
+    return queryInterface.bulkDelete("user", {
+      email: "admin@gmail.com",
+    });
   },
 };
